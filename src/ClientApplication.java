@@ -36,6 +36,9 @@ public class ClientApplication{
                     /*TODO
                     Find more elegant way to shut down the ClientThread, instead of System.exit.
                      */
+                    /*TODO
+                    Find a way to control Shutdown (Zie opdracht Discovery: Shutdown).
+                     */
                 }
 
             }
