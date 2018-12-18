@@ -12,13 +12,14 @@ public class FileHandler extends MulticastSender{
     boolean initialised = false;
     Login theServer = null;
     TCPHandler tcp;
-    Queue<String> q = new LinkedList<>();
+    Queue<String> repliQueue = new LinkedList<>();
+    ArrayList<String> fileNames = new ArrayList<String>();
 
     public FileHandler(NodeData d){
         super(d);
         rmiStartup();
-        fileStartup();
         tcp = new TCPHandler();
+        fileStartup();
     }
 
     public boolean processMulticast(Message mess) {
@@ -28,16 +29,7 @@ public class FileHandler extends MulticastSender{
             case "Replicate":
                 if(mess.getParameters()[1].equals(data.getNodeID())){
                     System.out.println("Request received : opening TCP socket");
-                    sendMulticast("TCPopen "+mess.getParameters()[0]+" "+mess.getSenderID());
                     tcp.getFromTCP(mess.getParameters()[0]);
-                }
-                break;
-            case "TCPopen":
-                System.out.println("Receiver opened socket : send file");
-                tcp.sendToTCP(mess.getSenderID(), "Files\\"+mess.getParameters()[0]);
-                if(!q.isEmpty()){
-                    String fileToReplicate = q.poll();
-                    sendMulticast("Replicate " + fileToReplicate + " " + whereToReplicate(fileToReplicate));
                 }
                 break;
             default:
@@ -62,9 +54,15 @@ public class FileHandler extends MulticastSender{
 
     private void fileStartup() {
         listFiles();
-        if(!q.isEmpty()){
-            String firstFile=q.poll();
-            sendMulticast("Replicate " + firstFile + " " + whereToReplicate(firstFile));
+        for(String f : fileNames){
+            String repliLocation = whereToReplicate(f);
+            System.out.println(repliLocation);
+            if (repliLocation == null) {
+                System.out.println("File "+f+" doesnt have to be replicated");
+            }else {
+                sendMulticast("Replicate " + f + " " + repliLocation);
+                tcp.sendToTCP(repliLocation, "Files\\"+f);
+            }
         }
 
     }
@@ -72,7 +70,7 @@ public class FileHandler extends MulticastSender{
     private void listFiles() {
         File folder = new File("Files");
         File[] listOfFiles = folder.listFiles();
-        ArrayList<String> fileNames = new ArrayList<String>();
+
         System.out.println("Listing local files..");
 
         for (int i = 0; i < listOfFiles.length; i++) {
@@ -80,7 +78,8 @@ public class FileHandler extends MulticastSender{
         }
 
         for(File f : listOfFiles){
-            q.add(f.getName());
+            fileNames.add(f.getName());
+            //repliQueue.add(f.getName());         //First time the files get checked, so they have to be replicated
         }
         System.out.println();
 
@@ -102,9 +101,9 @@ public class FileHandler extends MulticastSender{
             replicateNode = owner;
         }
         if(send==true) {
-            return null;
-        }else {
             return replicateNode;
+        }else {
+            return null;
         }
         /*
             boolean received = false;
