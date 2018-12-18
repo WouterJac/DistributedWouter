@@ -41,11 +41,6 @@ public class NetworkHandler extends MulticastSender{
                     }
                     break;
 
-                    /*TODO
-                    When the user shuts down, send neighbours (fake a message to self?)
-                    Aplicationthread to interface with user, so he can shut down
-                     */
-
                 default:
                     running = true;
                     //System.out.println("Networkcommand not found (setup): "+mess);
@@ -58,7 +53,7 @@ public class NetworkHandler extends MulticastSender{
                     data.setServerIP(mess.getSenderIp());
 
                     /*TODO
-                    Initialise RMI with server IP
+                    Initialise RMI with server IP -> Happens in filehandler right now
                      */
 
                     if(Integer.parseInt(mess.getParameters()[0])<1){        //If i'm the first node, i am my own neighbours
