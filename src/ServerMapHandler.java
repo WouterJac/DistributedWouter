@@ -91,7 +91,7 @@ public class ServerMapHandler extends MulticastSender{
         return ipMap.get(closeKey);
     }
 
-    public String getIpFromHash(int hash) {
+    public String getIDFromHash(int hash) {
         return ipMap.get(hash);
     }
 }

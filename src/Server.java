@@ -54,7 +54,7 @@ public class Server implements Login{
         return map.getOwner(fileName);
     }
 
-    public String getIpFromHash(int hash){
-        return map.getIpFromHash(hash);
+    public String getIDFromHash(int hash){
+        return map.getIDFromHash(hash);
     }
 }
