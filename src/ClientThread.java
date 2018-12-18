@@ -6,7 +6,7 @@ public class ClientThread extends Thread{
 
 
 
-    public ClientThread(NodeData data) {
+    public ClientThread(NodeData data) {        //Works as a background thread, processing multicasts
         this.data = data;
     }
 
