@@ -32,7 +32,6 @@ public class NetworkHandler extends MulticastSender{
                     }
                     break;
                 case "Shut":
-                    System.out.println(mess.getParameters()[0] +" "+ mess.getParameters()[1]+" "+data.getMyHash());
                     if(Integer.parseInt(mess.getParameters()[0])==data.getMyHash()){                   //If shutrequest comes from someone else, check if i'm his next/previous
                         data.setNextNode(Integer.parseInt(mess.getParameters()[1]));        //If so, set new next to the shut next or new previous to the shut previous accordingly
                         printNeighbours();
@@ -95,7 +94,6 @@ public class NetworkHandler extends MulticastSender{
     public void welcomeNewNode(String senderID)                                       //Welcomes a new node to the network
     {
         int hash = data.hash(senderID);
-        System.out.println("Checking if "+hash+" is previous or next");
         if (isPrevious(hash)) {                                             //If the new node is my previous, set it
             data.setPreviousNode(hash);
             printNeighbours();
@@ -137,6 +135,10 @@ public class NetworkHandler extends MulticastSender{
         else{
             return false;
         }
+    }
+
+    public boolean isSetup(){
+        return setup;
     }
 
     public void printNeighbours(){

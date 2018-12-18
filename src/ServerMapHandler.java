@@ -1,4 +1,6 @@
 import java.io.*;
+import java.rmi.RemoteException;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class ServerMapHandler extends MulticastSender{
@@ -26,6 +28,10 @@ public class ServerMapHandler extends MulticastSender{
             case "Shut":
                 removeNode(mess.getSenderID());
                 break;
+
+                /*TODO
+                Discovery -> Failure. Method aanmaken die van een node de previous en next uit de map haalt en deze doorstuurt.
+                 */
             default:
                 processed = false;
                 //System.out.println("Mapcommand not found");
@@ -62,5 +68,30 @@ public class ServerMapHandler extends MulticastSender{
         }catch(IOException e){
             e.printStackTrace();
         }
+    }
+
+    public String getOwner(String fileName) throws RemoteException {
+        int hash;
+        int closeKey = 0;
+        hash = Math.abs(fileName.hashCode()) % 327680;
+        System.out.println(hash);
+        for (Integer key : ipMap.keySet()) {
+
+            if (key < hash) {
+                if (key > closeKey) {
+                    closeKey = key;
+                }
+            }
+        }
+
+        if (closeKey == 0) {
+            closeKey = Collections.max(ipMap.keySet());
+        }
+        //System.out.println(closeKey);
+        return ipMap.get(closeKey);
+    }
+
+    public String getIpFromHash(int hash) {
+        return ipMap.get(hash);
     }
 }

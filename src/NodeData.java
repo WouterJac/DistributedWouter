@@ -100,4 +100,8 @@ public class NodeData {
         hash = Math.abs(name.hashCode()) % 327680;
         return hash;
     }
+
+    public void startRMI() {
+
+    }
 }

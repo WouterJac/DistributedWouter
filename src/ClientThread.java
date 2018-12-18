@@ -3,6 +3,8 @@ public class ClientThread extends Thread{
     private volatile boolean running = true;
     private Message mess;
     private NodeData data;
+    private NetworkHandler net;
+    private MulticastReceiver multi;
 
 
 
@@ -11,11 +13,13 @@ public class ClientThread extends Thread{
     }
 
     public void run(){
-        NetworkHandler net = new NetworkHandler(data);
-        MulticastReceiver multi = new MulticastReceiver(data);
+        net = new NetworkHandler(data);
+        multi = new MulticastReceiver(data);
         MulticastSender multis = new MulticastSender(data);
 
-        net.sendBootstrap();
+        networkSetup();
+        data.startRMI();
+        FileHandler file = new FileHandler(data);
 
         while(running){
 
@@ -27,8 +31,26 @@ public class ClientThread extends Thread{
 
             System.out.println("Received a message: "+mess);
             running = net.processMulticast(mess);
+            file.processMulticast(mess);
         }
 
+    }
+
+    public void networkSetup(){
+        net.sendBootstrap();
+
+
+        while(running && !net.isSetup()){
+
+            mess=null;
+
+            do{
+                mess=multi.receiveMulticast();
+            }while(mess==null);
+
+            System.out.println("Received a message: "+mess);
+            running = net.processMulticast(mess);
+        }
     }
 
     public void toggleRunning(){
