@@ -48,7 +48,7 @@ public class TCPHandler {
     public void getFromTCP(String fileName){
         int portNumber = 4444;//Integer.pars    eInt(args[0]);
         try {
-            File f = new File("Files\\"+"REP"+fileName);
+            File f = new File("Files\\Replicated\\"+fileName);
             ServerSocket serverSocket = new ServerSocket(4444/*Integer.parseInt(args[0]*/);
             Socket clientSocket = serverSocket.accept();
             //PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);

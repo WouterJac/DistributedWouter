@@ -1,5 +1,8 @@
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -14,6 +17,7 @@ public class FileHandler extends MulticastSender{
     TCPHandler tcp;
     Queue<String> repliQueue = new LinkedList<>();
     ArrayList<String> fileNames = new ArrayList<String>();
+    ArrayList<String> replicatedNames = new ArrayList<String>();
 
     public FileHandler(NodeData d){
         super(d);
@@ -30,8 +34,11 @@ public class FileHandler extends MulticastSender{
                 if(mess.getParameters()[1].equals(data.getNodeID())){
                     System.out.println("Request received : opening TCP socket");
                     tcp.getFromTCP(mess.getParameters()[0]);
+
                 }
                 break;
+            case "Bootstrap":
+
             default:
                 processed = false;
                 break;
@@ -53,22 +60,38 @@ public class FileHandler extends MulticastSender{
     }
 
     private void fileStartup() {
-        listFiles();
+        listLocalFiles();
         for(String f : fileNames){
-            String repliLocation = whereToReplicate(f);
-            System.out.println(repliLocation);
-            if (repliLocation == null) {
-                System.out.println("File "+f+" doesnt have to be replicated");
-            }else {
-                sendMulticast("Replicate " + f + " " + repliLocation);
-                tcp.sendToTCP(repliLocation, "Files\\"+f);
-            }
+            replicateFile(f);
         }
 
     }
 
-    private void listFiles() {
-        File folder = new File("Files");
+    private void replicateFile(String f){
+        String repliLocation = whereToReplicate(f);
+        System.out.println(repliLocation);
+        if (repliLocation == null) {
+            System.out.println("File "+f+" doesnt have to be replicated");
+        }else {
+            sendMulticast("Replicate " + f + " " + repliLocation);
+            tcp.sendToTCP(repliLocation, "Files\\Local\\"+f);
+        }
+    }
+
+    private boolean removeFile(String f){
+        boolean deleted = false;
+
+        try {
+            deleted = Files.deleteIfExists(Paths.get(f));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return deleted;
+    }
+
+    private void listLocalFiles() {
+        File folder = new File("Files\\Local");
         File[] listOfFiles = folder.listFiles();
 
         System.out.println("Listing local files..");
@@ -82,9 +105,6 @@ public class FileHandler extends MulticastSender{
             //repliQueue.add(f.getName());         //First time the files get checked, so they have to be replicated
         }
         System.out.println();
-
-
-
     }
 
     private String whereToReplicate(String name) {
@@ -105,20 +125,6 @@ public class FileHandler extends MulticastSender{
         }else {
             return null;
         }
-        /*
-            boolean received = false;
-            sendMulticast("Replicate " + name + " " + replicateNode);
-            while(!received)
-            {
-                Message mess=receiveMulticast();
-                if(mess.getContent().contains("TCPopen")){
-                    System.out.println("Receiver opened socket : send file");
-                    //sendToTCP(mess.getSender(), mess.getContent().split(" ")[1]);
-                    tcp.sendToTCP(replicateNode, "Files\\"+name);
-                    received=true;
-                }
-            }
-        }*/
     }
 
     public String getOwner(String fileName){
