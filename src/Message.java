@@ -14,7 +14,6 @@ public class Message {
         if (mess != null) {
             empty = false;
             everything = mess;
-            //System.out.println(mess);
             content = mess.split("\tsender:")[0];
             sender = mess.split("sender:")[1].split("#")[0];
             senderIp = sender.split(":")[0];
@@ -24,6 +23,9 @@ public class Message {
                 String paramFull = content.split(" ",2)[1];
                 parameters = paramFull.split(" ");
                 parameterAmount = parameters.length;
+                /*for(int i=0;i<parameterAmount;i++) {
+                    System.out.println("Parameter "+i+":"+parameters[i]);
+                }*/
             }
 
         }

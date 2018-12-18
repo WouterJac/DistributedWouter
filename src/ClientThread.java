@@ -26,7 +26,7 @@ public class ClientThread extends Thread{
             }while(mess==null);
 
             System.out.println("Received a message: "+mess);
-            net.processMulticast(mess);
+            running = net.processMulticast(mess);
         }
 
     }

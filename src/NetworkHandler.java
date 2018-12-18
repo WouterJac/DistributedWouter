@@ -9,7 +9,7 @@ public class NetworkHandler extends MulticastSender{
 
     public boolean processMulticast(Message mess){
 
-        boolean processed = true;
+        boolean running = true;
 
         if(setup) {
 
@@ -19,6 +19,28 @@ public class NetworkHandler extends MulticastSender{
                     break;
                 case "BootReplyServer":
                     System.out.println("This node has already been setup, ignoring BootReplyServer");
+                    break;
+                case "BootReplyNode":
+                    System.out.println("This node has already been setup, ignoring BootReplyNode");
+                    break;
+                case "ShutRequest":
+                    if(mess.getSenderID().equals(data.getNodeID())) {
+                        sendMulticast("Shut " + data.getPreviousNode() + " " + data.getNextNode());   //If shut request comes from self, send neighbours and shutdown
+                        running = false;
+                    }else{
+                        System.out.println("Another node is shutting down, ignoring ShutRequest");
+                    }
+                    break;
+                case "Shut":
+                    System.out.println(mess.getParameters()[0] +" "+ mess.getParameters()[1]+" "+data.getMyHash());
+                    if(Integer.parseInt(mess.getParameters()[0])==data.getMyHash()){                   //If shutrequest comes from someone else, check if i'm his next/previous
+                        data.setNextNode(Integer.parseInt(mess.getParameters()[1]));        //If so, set new next to the shut next or new previous to the shut previous accordingly
+                        printNeighbours();
+                    }else if(Integer.parseInt(mess.getParameters()[1])==data.getMyHash()){
+                        data.setPreviousNode(Integer.parseInt(mess.getParameters()[0]));
+                        printNeighbours();
+                    }
+                    break;
 
                     /*TODO
                     When the user shuts down, send neighbours (fake a message to self?)
@@ -26,7 +48,7 @@ public class NetworkHandler extends MulticastSender{
                      */
 
                 default:
-                    processed = false;
+                    running = true;
                     //System.out.println("Networkcommand not found (setup): "+mess);
             }
 
@@ -52,15 +74,16 @@ public class NetworkHandler extends MulticastSender{
                     setup = true;
                     break;
                 default:
-                    processed = false;
+                    running = true;
                     //System.out.println("Networkcommand not found (not setup): "+mess.toString());
             }
             if(setup){
-                System.out.println("This Client has entered the network.\n\nYour previous node is: "+data.getPreviousNode()+"\tYour next node is: "+data.getNextNode());
+                System.out.println("This Client has entered the network.\n\n");
+                printNeighbours();
             }
         }
         System.out.println();
-        return processed;
+        return running;
 
     }
 
@@ -72,12 +95,15 @@ public class NetworkHandler extends MulticastSender{
     public void welcomeNewNode(String senderID)                                       //Welcomes a new node to the network
     {
         int hash = data.hash(senderID);
+        System.out.println("Checking if "+hash+" is previous or next");
         if (isPrevious(hash)) {                                             //If the new node is my previous, set it
             data.setPreviousNode(hash);
+            printNeighbours();
         }
         if (isNext(hash)) {                                                 //If the new node is my next, set it
             sendMulticast("BootReplyNode " + data.getNextNode());   //If so, send him our last next
             data.setNextNode(hash);
+            printNeighbours();
         }
     }
 
@@ -85,7 +111,11 @@ public class NetworkHandler extends MulticastSender{
 
         if(data.getMyHash() == data.getNextNode()){                 //Indien dit naar zichzelf verwijst passen we zowiezo aan.
             return true;
-        }else if(((data.getMyHash() < hash) || data.getNextNode() < data.getMyHash()) && (hash < data.getNextNode())){
+        }else if((data.getMyHash()<hash) && (hash < data.getNextNode())){
+            return true;
+        }else if(data.getNextNode()<data.getMyHash() && hash >data.getMyHash() ){
+            return true;
+        }else if(data.getNextNode() < data.getMyHash() && hash < data.getNextNode()){
             return true;
         }else{
             return false;
@@ -97,12 +127,19 @@ public class NetworkHandler extends MulticastSender{
 
         if(data.getMyHash() == data.getNextNode()){                 //Indien dit naar zichzelf verwijst passen we zowiezo aan.
             return true;
-        }else if((hash < data.getMyHash() || data.getPreviousNode() > data.getMyHash()) && (data.getPreviousNode() < hash)){
-            data.setPreviousNode(hash);
+        }else if((data.getPreviousNode() < hash) && (hash <data.getMyHash())){
             return true;
-        }else{
+        }else if(data.getPreviousNode() > data.getMyHash() && hash < data.getMyHash()){
+            return true;
+        }else if(data.getPreviousNode() > data.getMyHash() && hash > data.getPreviousNode()){
+            return true;
+        }
+        else{
             return false;
         }
+    }
 
+    public void printNeighbours(){
+        System.out.println("NEW NEIGHBOURS\n\tYour previous node is: "+data.getPreviousNode()+"\tYour next node is: "+data.getNextNode());
     }
 }

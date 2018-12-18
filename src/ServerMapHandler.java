@@ -28,7 +28,7 @@ public class ServerMapHandler extends MulticastSender{
                 break;
             default:
                 processed = false;
-                System.out.println("Mapcommand not found");
+                //System.out.println("Mapcommand not found");
         }
         return processed;
     }

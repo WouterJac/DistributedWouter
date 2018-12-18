@@ -1,17 +1,22 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-public class ClientApplication{
+public class ClientApplication extends MulticastSender{
 
     private String name;
     private static boolean hasMessage = false;
     protected String message = "";
     protected static  boolean cont = true;
 
+    public ClientApplication(NodeData d){
+        super(d);
+    }
+
 
     public static void main(String[] args){
 
         NodeData data = new NodeData();
+        ClientApplication app = new ClientApplication(data);
         ClientThread backgroundWorker = new ClientThread(data);
         backgroundWorker.start();
 
@@ -26,19 +31,13 @@ public class ClientApplication{
 
             while (cont) {
                 System.out.println("What action should be performed?");
-                System.out.println("1: Shut Down");
+                System.out.println("1: Shut Down\n");
                 String s = br.readLine();
                 if (s.equals("1")) {
                     cont = false;
                     System.out.println("Shutting down this ClientThread..");
-                    System.exit(0);
+                    app.sendMulticast("ShutRequest");
 
-                    /*TODO
-                    Find more elegant way to shut down the ClientThread, instead of System.exit.
-                     */
-                    /*TODO
-                    Find a way to control Shutdown (Zie opdracht Discovery: Shutdown).
-                     */
                 }
 
             }
