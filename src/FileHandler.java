@@ -16,15 +16,22 @@ public class FileHandler extends MulticastSender{
     Login theServer = null;
     TCPHandler tcp;
     Queue<String> repliQueue = new LinkedList<>();
-    ArrayList<String> fileNames = new ArrayList<String>();
     ArrayList<String> replicatedNames = new ArrayList<String>();
+    ArrayList<String> fileNames;
+    FileAddCheckThread fileChecker;
 
     public FileHandler(NodeData d){
         super(d);
         rmiStartup();
         tcp = new TCPHandler();
         fileStartup();
+        //fileChecker = new FileAddCheckThread(data);
     }
+
+    /*TODO
+    Replication -> UPDATE (thread checkt constant of een nieuwe file werd aangemaakt)
+    Replication -> SHUTDOWN
+     */
 
     public boolean processMulticast(Message mess) {
         boolean processed = true;
@@ -38,7 +45,17 @@ public class FileHandler extends MulticastSender{
                 }
                 break;
             case "Bootstrap":
-
+                newNodeReplication();
+                break;
+            case "Filechange":
+                ArrayList<String> newFileNames = listFiles("Local");
+                for(String s : newFileNames) {
+                    if (!fileNames.contains(s)) {
+                        replicateFile(s,whereToReplicate(s));
+                    }
+                }
+                fileChecker = new FileAddCheckThread(data);
+                break;
             default:
                 processed = false;
                 break;
@@ -60,22 +77,35 @@ public class FileHandler extends MulticastSender{
     }
 
     private void fileStartup() {
-        listLocalFiles();
+        fileNames = listFiles("Local");
         for(String f : fileNames){
-            replicateFile(f);
+            replicateFile(f, whereToReplicate(f));
         }
 
     }
 
-    private void replicateFile(String f){
-        String repliLocation = whereToReplicate(f);
-        System.out.println(repliLocation);
-        if (repliLocation == null) {
+    private void replicateFile(String f, String receiver){
+        if (receiver == null) {
             System.out.println("File "+f+" doesnt have to be replicated");
         }else {
-            sendMulticast("Replicate " + f + " " + repliLocation);
-            tcp.sendToTCP(repliLocation, "Files\\Local\\"+f);
+            sendMulticast("Replicate " + f + " " + receiver);
+            tcp.sendToTCP(receiver, "Files\\Local\\"+f);
         }
+    }
+
+    private void newNodeReplication() {
+        ArrayList<String> replicatedFileNames = listFiles("Replicated");
+        for(String f : replicatedFileNames){
+            if(!getOwner(f).equals(data.getNodeID())){
+                replicateFile(f, getOwner(f));
+                System.out.println("Deleted : "+removeFile(f));
+            }
+        }
+
+        /*TODO
+        Check if replication is handled correctly when a new node enters the network
+         */
+
     }
 
     private boolean removeFile(String f){
@@ -89,10 +119,14 @@ public class FileHandler extends MulticastSender{
 
 
         return deleted;
+        /*TODO
+        Nagaan of deze removefile werkt
+         */
     }
 
-    private void listLocalFiles() {
-        File folder = new File("Files\\Local");
+    private ArrayList<String> listFiles(String directory) {
+        File folder = new File("Files\\"+directory);
+        ArrayList<String> fileNames = new ArrayList<String>();
         File[] listOfFiles = folder.listFiles();
 
         System.out.println("Listing local files..");
@@ -106,6 +140,7 @@ public class FileHandler extends MulticastSender{
             //repliQueue.add(f.getName());         //First time the files get checked, so they have to be replicated
         }
         System.out.println();
+        return fileNames;
     }
 
     private String whereToReplicate(String name) {

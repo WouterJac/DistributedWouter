@@ -42,7 +42,7 @@ public class MulticastReceiver {
 
 
         if(mess.getSenderID().equals(data.getNodeID())) {
-            if(mess.getCommand().equals("ShutRequest")){               //Doesnt send own message through, except for shutdown
+            if(mess.getCommand().equals("ShutRequest") || mess.getCommand().equals("FileChange")){               //Doesnt send own message through, except for shutdown
                 return mess;
             }else {
                 return null;

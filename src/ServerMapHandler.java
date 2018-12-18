@@ -43,7 +43,7 @@ public class ServerMapHandler extends MulticastSender{
         int hash = data.hash(sender);
         ipMap.put(hash, sender);
         saveFile(ipMapFile);
-        System.out.println("Added Hash: " + hash + "\tHost: " + sender);
+        System.out.println("Added Hash: " + hash + "\tHost: " + sender+"\n");
     }
 
     public boolean removeNode(String ip) {
@@ -74,7 +74,7 @@ public class ServerMapHandler extends MulticastSender{
         int hash;
         int closeKey = 0;
         hash = Math.abs(fileName.hashCode()) % 327680;
-        System.out.println(hash);
+        //System.out.println(hash);
         for (Integer key : ipMap.keySet()) {
 
             if (key < hash) {
